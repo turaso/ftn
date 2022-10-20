@@ -1,0 +1,46 @@
+cmake_minimum_required(VERSION 3.16)
+project(ftn VERSION 1.0.0 DESCRIPTION "fraction")
+
+message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+
+enable_testing()
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
+
+FILE(GLOB SOURCES src/*.cc)
+# FILE(GLOB HEADERS include/tot/*.h)
+include_directories(include)
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
+set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER include/ftn/ftn.h)
+target_include_directories(${PROJECT_NAME} PRIVATE include/)
+target_include_directories(${PROJECT_NAME} PRIVATE src/)
+install(TARGETS ${PROJECT_NAME})
+  # LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/lib/
+  # PUBLIC_HEADER DESTINATION ${CMAKE_BINARY_DIR}/include/tot/)
+# install(FILES ${HEADERS} DESTINATION ${CMAKE_BINARY_DIR}/include/${PROJECT_NAME})
+configure_file(${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+set(EXE launcher)
+add_executable(${EXE} main.cxx)
+add_dependencies(${EXE} ${PROJECT_NAME})
+target_link_libraries(${EXE} ${PROJECT_NAME})
+
+install(TARGETS ${EXE} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/)
+
+FILE(GLOB TESTS tests/*.cc)
+foreach(test ${TESTS})
+  get_filename_component(test_exe ${test} NAME_WE)
+  add_executable(${test_exe} ${test})
+  add_dependencies(${test_exe} ${PROJECT_NAME})
+  target_link_libraries(${test_exe} ${PROJECT_NAME})
+  add_test(NAME ${test_exe} COMMAND ${test_exe})
+  # install(TARGETS ${test_exe} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/tests)
+endforeach()
